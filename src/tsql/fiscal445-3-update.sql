@@ -170,5 +170,5 @@ and cal.cal_day = 1 --one row per month
 ;
 
 update tgt
-  set fsc_day = 1 + datediff(day, fsc_month_start_date, fsc_datekey)
+  set fsc_day_of_month_ordinal = 1 + datediff(day, fsc_month_start_date, fsc_datekey)
 from hifical.cal_fiscal_445 tgt
