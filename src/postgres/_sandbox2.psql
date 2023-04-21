@@ -1,8 +1,0 @@
-select 
-    count(*) as row_qty
-    , min(datekey) as min_datekey
-    , max(datekey) as max_datekey
-from cal_actual;
-
-call public.generate_cal_actual(10,30,current_date);
-
