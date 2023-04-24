@@ -52,7 +52,8 @@ BEGIN
     truncate public.cal_fiscal_445;
     insert into public.cal_fiscal_445 (
         fsc_datekey, fsc_year,fsc_year_begin_date, fsc_year_end_date, 
-        fsc_day_of_year, fsc_weekday_ordinal, fsc_week_of_year, fsc_quarter_num
+        fsc_day_of_year, fsc_weekday_ordinal, fsc_week_of_year, fsc_quarter_num,
+        fsc_is_holiday, fsc_is_workday
     )
         with RECURSIVE yrs (last_year, this_year, fyr_start_date, natural_ye, fyr_ye, has_extra_week) as (
             SELECT 
@@ -96,6 +97,8 @@ BEGIN
                 --extra weeks go in Q4
                 else LEAST(4,(ac.datekey - fyr_start_date) / 91 + 1)
             end as fsc_quarter_num
+            , cal_is_holiday as fsc_is_holiday
+            , 1 as fsc_is_workday--open 7 days
         from yrs
         inner join public.cal_actual ac on ac.datekey between yrs.fyr_start_date and yrs.fyr_ye
         ;
