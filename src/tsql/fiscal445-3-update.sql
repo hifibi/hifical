@@ -1,70 +1,64 @@
-/* Fiscal Holidays 
+/* Fiscal Holidays */
 
-   Why bother with this when we have holidays and workdays in cal_actual?
-   The point of holidays in cal_actual is to keep track of available holidays.
-   In the Fiscal calendar, we track what is actually observed by the company.
+--All actual holidays that fall on a normal work day (Mon - Sat)
+UPDATE fsc
+SET
+  fsc_holiday_name = cal_holiday_name
+, fsc_is_workday = 0
+, fsc_is_holiday = 1
+ from hifical.cal_actual cal
+ inner join hifical.cal_fiscal_445 fsc
+ on cal.datekey = fsc.fsc_datekey
+ where fsc_year is not null
+ and cal_is_holiday = 1
+ and cal_weekday_num > 1 
 
-   Configs
-   - Which holidays will be fiscal holidays
-   - Will federal observance days be holidays?
-   - 
 
-*/
+--Christmas and Independence Days if they fall on a weekend will have observance holidays on the nearest workday
 
-/* 
-  get a list of holiday names in cal_actual
-  update the where clause in the fsc_holidays CTE to exclude holidays that are not recognized in the fiscal calendar
-select distinct
-    cal_holiday_name
-from cal_actual
-where cal_is_holiday = 1;
-;
-*/
+UPDATE fsc
+SET
+fsc.fsc_holiday_name = cal.cal_holiday_name + ' (Observed)'
+, fsc.fsc_is_workday = 0
+, fsc.fsc_is_holiday = 1
+from hifical.cal_fiscal_445 fsc
+inner join hifical.cal_actual cal
+on fsc.fsc_datekey = dateadd(dd, CASE when cal.cal_weekday_num = 7 then -1 else 1 end, cal.datekey)
+where fsc.fsc_year is not null
+and cal.cal_holiday_name in ('Christmas Day','Independence Day')
+and cal.cal_weekday_num in (7,1)
 
-with fsc_holidays as (
-    select
-        datekey
-        , cal_holiday_name
-    from public.cal_actual
-    where 
-      cal_is_holiday = 1
-      and cal_holiday_name not in ('Martin Luther King Day')
 
-)
-update cal_fiscal_445 set
-    fsc_is_holiday = 1
-    , fsc_holiday_name = case when fsc_is_workday = 1 then cal_holiday_name end
-    , fsc_is_workday = 0
-from fsc_holidays
-where fsc_datekey = datekey
-;
+/* calculate the in-month workday sequence for workdays */
+update fsc
+set fsc_workday_mtd = upd_val
+from hifical.cal_fiscal_445 fsc
+inner join (
+    select 
+    fsc_datekey
+    , ROW_NUMBER() over (Partition By fsc_yyyymm Order by fsc_datekey) as upd_val
+    from hifical.cal_fiscal_445
+    where
+    fsc_is_workday = 1
+) as t1 on fsc.fsc_datekey = t1.fsc_datekey;
 
-/* Christmas and Independence Days if they fall on a weekend will have Federal observance holidays on the nearest workday */
-UPDATE public.cal_fiscal_445
-set
-    fsc_holiday_name = fsc.fsc_holiday_name || ' (Observed)'
-    , fsc_is_workday = 0
-    , fsc_is_holiday = 1
-from public.cal_fiscal_445 fsc
-where
-    fsc.fsc_holiday_name in ('Christmas Day','Independence Day')
-    and date_part('dow',fsc.fsc_datekey) in (0,6) --Saturday, Sunday
-    and cal_fiscal_445.fsc_datekey = fsc.fsc_datekey
-        + case 
-            when date_part('dow',fsc.fsc_datekey) = 0 then 1 --Sunday holiday will be observed Monday, +1 days
-            else - 1 end --Saturday holiday will be observed Friday, -1 days
-;    
 
-with wd as (
-    select
-        fsc_datekey
-        --pg default frame is all rows preceding to current row
-        --meaning default sum + window w/o frame gives a running sum
-        , sum(fsc_is_workday) over (partition by fsc_yyyymm order by fsc_datekey) as mtd_workdays
-    from public.cal_fiscal_445
-)
-update public.cal_fiscal_445
-    set fsc_workday_mtd = wd.mtd_workdays
-from wd
-where wd.fsc_datekey = cal_fiscal_445.fsc_datekey
-;
+/* set the workday number for weekends and holidays to that of the previous workday */
+update fsc
+set fsc_workday_mtd = case when fsc_is_workday = 0 then isnull(upd_fsc_workday_mtd,0) else fsc_workday_mtd end
+from hifical.cal_fiscal_445 fsc
+left join (
+  select top 1 with ties 
+  t1.fsc_datekey
+
+  , t2.fsc_workday_mtd as upd_fsc_workday_mtd
+  from hifical.cal_fiscal_445 t1
+  inner join hifical.cal_fiscal_445 t2
+    on t1.fsc_yyyymm = t2.fsc_yyyymm
+
+    and t1.fsc_datekey > t2.fsc_datekey --previous workday
+  where
+  t1.fsc_is_workday = 0
+  and t2.fsc_is_workday = 1
+  order by ROW_NUMBER() over (partition by t1.fsc_datekey order by t1.fsc_datekey, t2.fsc_datekey desc) --previous workday
+) as t_upd on fsc.fsc_datekey = t_upd.fsc_datekey
