@@ -1,23 +1,23 @@
 --update actual
 
 /* set first last days of fiscal weeks */
-UPDATE public.cal_actual tgt
+UPDATE public.cal_actual
 SET 
-    cal_week_start_date = tUpd.cal_week_start_date,
+    cal_week_begin_date = tUpd.cal_week_begin_date,
     cal_week_end_date = tUpd.cal_week_end_date
 FROM (
     SELECT 
         cal_year,
         cal_week_of_year,
-        min(datekey) AS cal_week_start_date,
+        min(datekey) AS cal_week_begin_date,
         max(datekey) AS cal_week_end_date 
     FROM public.cal_actual
     GROUP BY 
         cal_year,
         cal_week_of_year
     ) tUpd
-WHERE tgt.cal_year = tUpd.cal_year
-AND tgt.cal_week_of_year = tUpd.cal_week_of_year
+WHERE cal_actual.cal_year = tUpd.cal_year
+AND cal_actual.cal_week_of_year = tUpd.cal_week_of_year
 ;
 
 

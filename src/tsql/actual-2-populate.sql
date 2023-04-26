@@ -50,7 +50,7 @@ insert into hifical.cal_actual (
 , cal_month_end_date        
 , cal_month_name_long       
 , cal_month_name_short      
-, cal_month_start_date      
+, cal_month_begin_date      
 , cal_quarter_num             
 , cal_weekday_num             
 , cal_weekday_month_instance
@@ -73,7 +73,7 @@ select
 , cal_month_end_date           = eomonth(datekey)
 , cal_month_name_long           = format(datekey, 'MMMM')
 , cal_month_name_short          = format(datekey, 'MMM')
-, cal_month_start_date          = datefromparts(year(datekey),month(datekey),1)
+, cal_month_begin_date          = datefromparts(year(datekey),month(datekey),1)
 , cal_quarter_num                 = datepart(qq, datekey)
 , cal_weekday_num                 = datepart(dw, datekey)
 , cal_weekday_month_instance    = ROW_NUMBER() over (partition by year(datekey), month(datekey), datepart(dw,datekey) ORDER BY datekey)

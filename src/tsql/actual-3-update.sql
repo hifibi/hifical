@@ -3,14 +3,14 @@
 /* set first last days of fiscal weeks */
 UPDATE tgt
    SET 
-       cal_week_start_date = tUpd.cal_week_start_date
+       cal_week_begin_date = tUpd.cal_week_begin_date
        , cal_week_end_date  = tUpd.cal_week_end_date 
 FROM hifical.cal_actual tgt
 inner join (
         select 
             cal_year
             , cal_week_of_year
-            , min(datekey) cal_week_start_date
+            , min(datekey) cal_week_begin_date
             , max(datekey) cal_week_end_date 
         from hifical.cal_actual
         group by 

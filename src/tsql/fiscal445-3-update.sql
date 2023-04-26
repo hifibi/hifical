@@ -39,7 +39,6 @@ from fsc_holidays
 where fsc_datekey = datekey
 ;
 
-
 /* Christmas and Independence Days if they fall on a weekend will have Federal observance holidays on the nearest workday */
 UPDATE public.cal_fiscal_445
 set
@@ -56,8 +55,6 @@ where
             else - 1 end --Saturday holiday will be observed Friday, -1 days
 ;    
 
-
---this is kinda slow--31 seconds for 20 years
 with wd as (
     select
         fsc_datekey

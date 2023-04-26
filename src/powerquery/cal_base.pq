@@ -21,9 +21,9 @@ let
     add_yyyyq = Table.AddColumn(add_date_int, "cal_yyyyq", each [cal_year] * 10 + [cal_qtr], Int64.Type),
     add_yyyymm = Table.AddColumn(add_yyyyq, "cal_yyyymm", each [cal_year] * 100 + [cal_month], Int64.Type),
     add_yyyyww = Table.AddColumn(add_yyyymm, "cal_yyyyww", each [cal_year] * 100 + [cal_week_of_year], Int64.Type),
-    add_mo_start = Table.AddColumn(add_yyyyww, "cal_month_start_date", each Date.StartOfMonth([datekey]), Date.Type),
+    add_mo_start = Table.AddColumn(add_yyyyww, "cal_month_begin_date", each Date.StartOfMonth([datekey]), Date.Type),
     add_mo_end = Table.AddColumn(add_mo_start, "cal_month_end_date", each Date.EndOfMonth([datekey]), Date.Type),
-    add_week_start = Table.AddColumn(add_mo_end, "cal_week_start_date", each Date.StartOfWeek([datekey]), Date.Type),
+    add_week_start = Table.AddColumn(add_mo_end, "cal_week_begin_date", each Date.StartOfWeek([datekey]), Date.Type),
     add_week_end = Table.AddColumn(add_week_start, "cal_week_end_date", each Date.EndOfWeek([datekey]), Date.Type),
     
     /* pivot date record */

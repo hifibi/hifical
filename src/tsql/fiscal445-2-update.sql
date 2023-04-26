@@ -120,14 +120,14 @@ where fsc_year is not null
 /* set first last days of fiscal weeks */
 UPDATE tgt
    SET 
-       fsc_week_start_date = tUpd.fsc_week_start_date
+       fsc_week_begin_date = tUpd.fsc_week_begin_date
        , fsc_week_end_date  = tUpd.fsc_week_end_date 
 FROM hifical.cal_fiscal_445 tgt
 inner join (
         select 
             fsc_year
             , fsc_week_of_year
-            , min(fsc_datekey) fsc_week_start_date
+            , min(fsc_datekey) fsc_week_begin_date
             , max(fsc_datekey) fsc_week_end_date 
         from hifical.cal_fiscal_445
         group by 
@@ -145,7 +145,7 @@ GO
 select
     fsc_year
     , fsc_month
-    , MIN(fsc_datekey) as fsc_month_start_dateActual
+    , MIN(fsc_datekey) as fsc_month_begin_dateActual
     , MAX(fsc_datekey) as fsc_month_end_dateActual
 into #fscMo
 from hifical.cal_fiscal_445
@@ -155,7 +155,7 @@ group by fsc_year, fsc_month
 update fsc set
 fsc.fsc_month_name_short            = cal.cal_month_name_short
 , fsc.fsc_month_name_long           = cal.cal_month_name_long
-, fsc.fsc_month_start_date          = fscMo.fsc_month_start_dateActual
+, fsc.fsc_month_begin_date          = fscMo.fsc_month_begin_dateActual
 , fsc.fsc_month_end_date            = fscMo.fsc_month_end_dateActual
 , fsc.fsc_yyyymm               = fscMo.fsc_year * 100 + fscMo.fsc_month
 
@@ -170,5 +170,5 @@ and cal.cal_day = 1 --one row per month
 ;
 
 update tgt
-  set fsc_day_of_month_ordinal = 1 + datediff(day, fsc_month_start_date, fsc_datekey)
+  set fsc_day_of_month_ordinal = 1 + datediff(day, fsc_month_begin_date, fsc_datekey)
 from hifical.cal_fiscal_445 tgt
